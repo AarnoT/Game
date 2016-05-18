@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="16" height="10" tilewidth="60" tileheight="60" nextobjectid="4">
+ <objectgroup name="Object Layer 1" visible="0">
+  <object id="1" x="360" y="120" width="300" height="80"/>
+  <object id="2" x="360" y="240" width="300" height="80"/>
+  <object id="3" x="360" y="360" width="300" height="80"/>
+ </objectgroup>
+</map>
