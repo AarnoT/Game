@@ -9,6 +9,6 @@ Click to move.
 2. [Pygame] (http://www.pygame.org/docs/index.html)) (can be installed using "pip install pygame")
 3. [PyTMX](http://pytmx.readthedocs.io/en/latest/) (can be installed using "pip install pytmx")
 
-## To-do:
+#### To-do:
 1. Add some tests
 2. Implement battle system
