@@ -25,6 +25,17 @@ class Group(pg.sprite.Group):
         for sprite in self.sprites():
             pass
 
+    def new_draw(self, surf, level_height):
+        """Draw each sprite to the surf at the correct position."""
+        screen_height = pg.display.get_surface().get_height()
+        for sprite in self.sprites():
+            if level_height - sprite.rect.y < screen_height/2:
+                real_y = screen_height - (level_height - sprite.rect.y)
+            else:
+                real_y = min(screen_height/2, sprite.rect.y)
+            surf.blit(
+                sprite.image, (sprite.rect.x, real_y))
+
 
 main_group = Group()
 
@@ -33,8 +44,8 @@ class Sprite(pg.sprite.Sprite):
     """
     Class to extend the pygame sprite class.
 
-    instance variables:
-    x_pos, y_pos, steps, prev_scroll, image, rect, size, state
+    instance variables: x_pos, y_pos, steps, prev_scroll, image,
+    rect, size, state
     methods: __init__, load_frames, scale, move, animate, update
     """
 
@@ -70,12 +81,17 @@ class Sprite(pg.sprite.Sprite):
         self.max_speed *= multiplier
         self.size = [int(num * multiplier) for num in self.size]
 
-    def move(self, pos):
+    def move(self, pos, level_height):
         """Move sprite towards 'pos'."""
-        distance = hypot(self.x_pos - pos[0], self.y_pos - pos[1])
+        screen_height = pg.display.get_surface().get_height()
+        if level_height - self.y_pos < screen_height/2:
+            real_y = screen_height - (level_height - self.y_pos)
+        else:
+            real_y = min(screen_height/2, self.y_pos)
+        distance = hypot(self.x_pos - pos[0], real_y - pos[1])
         self.steps = distance / self.max_speed
         self.x_vel = (pos[0] - self.x_pos) / self.steps
-        self.y_vel = (pos[1] - self.y_pos) / self.steps
+        self.y_vel = (pos[1] - real_y) / self.steps
         if self.x_vel < 0:
             self.state = 'moving_left'
         else:
@@ -96,44 +112,13 @@ class Sprite(pg.sprite.Sprite):
 
     def update(self, elapsed_time):
         """Update sprite position. Should be called every frame."""
-        self.animate(elapsed_time)
         self.x_pos += self.x_vel * (elapsed_time / 16.0)
         self.y_pos += self.y_vel * (elapsed_time / 16.0)
         self.rect = self.image.get_rect(center=(self.x_pos, self.y_pos))
         self.steps -= elapsed_time / 16.0
-        if self.steps <= 0:
+        if self.state != 'still' and self.steps <= 0:
             self.x_vel, self.y_vel = 0.0, 0.0
             self.state = 'still'
-
-
-class Player(Sprite):
-    """
-    Player class to extend the sprite class.
-
-    methods: scroll
-    instance variables: prev_scroll
-    """
-    def __init__(self, pos, still, moving):
-        super(Player, self).__init__(pos, still, moving)
-        self.prev_scroll = 0
-
-    def scroll(self, level_height):
-        """Return amount level should be scrolled."""
-        height = pg.display.get_surface().get_height()
-        if self.y_pos + self.prev_scroll < height / 2:
-            scroll = 0
-        elif height > level_height:
-            scroll = 0
-        elif self.y_pos + self.prev_scroll > (level_height - height / 2):
-            scroll = level_height - height
-        else:
-            # All sprites have to be moved
-            # the same amount the scroll is adjusted.
-
-            y_change = self.y_pos - height / 2
-            for sprite in main_group:
-                sprite.y_pos -= y_change
-            scroll = self.prev_scroll + y_change
-        self.prev_scroll = scroll
-        return scroll
+            self.frames['time'] = 100
+        self.animate(elapsed_time)
 

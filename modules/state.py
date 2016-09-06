@@ -12,7 +12,7 @@ import pygame as pg
 from . import level
 from . import screen as sc
 from .button import Button, ButtonSet
-from .sprite import Player, main_group
+from .sprite import Sprite, main_group
 
 
 class State(object):
@@ -133,7 +133,7 @@ class WorldState(State):
     """
     The world state.
 
-    instance variables: level, player
+    instance variables: level, player, scroll
     methods: __init__, scale, update, on_event, on_click
     class variables: level, player_anim, pos_1, player_image
     """
@@ -147,27 +147,28 @@ class WorldState(State):
         """Set instance variables."""
         logging.info('World is active')
         self.level = level.Level(level_name)
-        self.player = Player(pos, image, anim)
+        self.player = Sprite(pos, image, anim)
         sc.screen.blit(sc.background, (0, 0))
 
-    def scale(self, multiplier): # Player pos inaccurate after scaling.
+    def scale(self, multiplier):
         """Scale things specific to the state."""
-        prev_scroll = self.player.prev_scroll
-        prev_y_pos = self.player.y_pos
+        level_height = self.level.tile_height * self.level.level.height
+        res = sc.res[0], min(sc.res[1], level_height)
+        sc.res, sc.screen = sc.set_display(res, sc.screen.get_flags())
         self.level.reload()
-        self.player.prev_scroll *= multiplier
         for sprite in main_group:
             sprite.scale(multiplier)
-        level_height = self.level.tile_width * self.level.level.height
-        if self.player.y_pos + self.player.prev_scroll > (
-                - sc.screen.get_height()/2):
-            self.player.y_pos -= (
-                self.player.scroll(level_height) + self.player.y_pos) - (
-                    prev_scroll * multiplier + prev_y_pos * multiplier)
-        blit_rect = pg.Rect(
-            (0, self.player.scroll(level_height)), sc.screen.get_size())
+        blit_rect = pg.Rect((0, self.scroll), sc.screen.get_size())
         sc.draw_queue.append({'layer' : 25, 'func' : sc.screen.blit,
                               'args' : (sc.background, (0, 0), blit_rect)})
+
+    @property
+    def scroll(self):
+        """Return how much the screen should be scrolled."""
+        level_height = self.level.tile_height * self.level.level.height
+        screen_height = sc.screen.get_height()
+        return max(0, min(
+            self.player.y_pos - screen_height/2, level_height - screen_height))
 
     def update(self, time):
         """Update the state. Should be called every loop."""
@@ -176,28 +177,20 @@ class WorldState(State):
 
     def update_level(self, time):
         """Scroll and animate level."""
-        prev_scroll = self.player.prev_scroll
-        scroll = self.player.scroll(
-            self.level.level.height * self.level.tile_width)
-        if scroll != prev_scroll:
-            blit_rect = pg.Rect((0, scroll), sc.screen.get_size())
+        if self.player.y_vel != 0:
+            blit_rect = pg.Rect((0, self.scroll), sc.screen.get_size())
             sc.draw_queue.append({'layer' : 1, 'func' : sc.screen.blit,
                                   'args' : (sc.background, (0, 0), blit_rect)})
-            self.level.animate(time, scroll, draw=True)
+            self.level.animate(time, self.scroll, draw=True)
         else:
-            self.level.animate(time, scroll)
+            self.level.animate(time, self.scroll)
 
     def update_sprites(self, time):
         """Update and draw each sprite."""
         main_group.update(time)
-        for sprite in main_group.sprites():
-            pos = sprite.rect.topleft
-            clear_rect = pg.Rect(
-                (sprite.rect.x, sprite.rect.y + self.player.prev_scroll),
-                sprite.rect.size)
-            sc.screen.blit(sc.background, pos, clear_rect)
         sc.draw_queue.append({
-            'layer' : 15, 'func' : main_group.draw, 'args' : (sc.screen,)})
+            'layer' : 15, 'func' : main_group.new_draw, 'args' : (
+                sc.screen, self.level.tile_height * self.level.level.height)})
 
     def on_event(self, event):
         """Call function depending on event."""
@@ -206,7 +199,7 @@ class WorldState(State):
 
     def on_click(self, pos):
         """Move self.player to 'pos'."""
-        self.player.move(pos)
+        self.player.move(pos, self.level.tile_height * self.level.level.height)
 
 
 class BattleState(State):
