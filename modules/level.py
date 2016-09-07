@@ -91,24 +91,23 @@ class Level(object):
         for tile in self.animated_tiles:
             tile['timer'] += elapsed_time
             if tile['timer'] >= tile['frames'][tile['index']].duration:
-                pos = (tile['pos'].x * self.tile_width,
-                       tile['pos'].y * self.tile_height - scroll)
                 # 'tile_2' is the tile above or below 'tile'.
                 tile_2 = self.tiles.get((tile['pos'].x, tile['pos'].y,
                                          [1, 0][tile['pos'].layer]))
-                if tile_2:
-                    priority = [2, 6][tile_2['pos'].layer]
-                    sc.draw_queue.append(
-                        {'layer' : priority, 'surf' : tile_2['images'][0],
-                         'pos' : pos})
-                priority = [2, 6][tile['pos'].layer]
-                sc.draw_queue.append(
-                    {'layer' : priority,
-                     'surf' : tile['images'][tile['index']], 'pos' : pos})
-                tile['timer'] -= tile['frames'][tile['index']].duration
-                tile['index'] = (tile['index'] + 1) % len(tile['frames'])
                 if draw:
                     self.animate_to_background(tile, tile_2)
+                else:
+                    pos = (tile['pos'].x * self.tile_width,
+                           tile['pos'].y * self.tile_height - scroll)
+                    if tile_2:
+                        sc.draw_queue.append(
+                            {'layer' : [2, 6][tile_2['pos'].layer],
+                             'surf' : tile_2['images'][0], 'pos' : pos})
+                    sc.draw_queue.append(
+                        {'layer' : [2, 6][tile['pos'].layer],
+                         'surf' : tile['images'][tile['index']], 'pos' : pos})
+                tile['timer'] -= tile['frames'][tile['index']].duration
+                tile['index'] = (tile['index'] + 1) % len(tile['frames'])
 
     def animate_to_background(self, tile, tile_2):
         """Draw animated tiles onto the background."""
