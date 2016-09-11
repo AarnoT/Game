@@ -16,7 +16,7 @@ class Level(object):
 
     instance variables: level, prev_scroll, tile_obj, tile_width,
                         tile_height, tile_size, scroll, tiles
-    methods: __init__, reload, load_tiles, draw, animate
+    methods: __init__, reload, load_tiles, draw, animate, draw_tile
     """
 
     def __init__(self, tmx_file):
@@ -85,32 +85,38 @@ class Level(object):
 
     def animate(self, elapsed_time, scroll, surf=None):
         """
-        Draw next animation frame if enough time has passed.
+        Update each animated tile's info and draw it.
         Should be called every frame.
-        Currently doesn't support two animated tiles in the same pos.
         """
+        # Can't have sc.screen as a keyword argument
+        # because it wouldn't work when a new screen is made.
         surf = surf or sc.screen
         for tile in self.animated_tiles:
             tile['timer'] += elapsed_time
             if tile['timer'] >= tile['frames'][tile['index']].duration:
-                # 'tile_2' is the tile above or below 'tile'.
-                tile_2 = self.tiles.get((tile['pos'].x, tile['pos'].y,
-                                         [1, 0][tile['pos'].layer]))
-                if surf is sc.screen:
-                    pos = (tile['pos'].x * self.tile_width,
-                           tile['pos'].y * self.tile_height - scroll)
-                else:
-                    pos = (tile['pos'].x * self.tile_width,
-                           tile['pos'].y * self.tile_height)
-                if tile_2:
-                    sc.draw_queue.append(
-                        {'layer' : [2, 6][tile_2['pos'].layer],
-                         'func' : surf.blit,
-                         'args' : (tile_2['images'][0], pos)})
-                sc.draw_queue.append(
-                    {'layer' : [2, 6][tile['pos'].layer],
-                     'func' : surf.blit,
-                     'args' : (tile['images'][tile['index']], pos)})
+                self.draw_tile(scroll, tile, surf)
                 tile['timer'] -= tile['frames'][tile['index']].duration
                 tile['index'] = (tile['index'] + 1) % len(tile['frames'])
+
+    def draw_tile(self, scroll, tile, surf):
+        """
+        Draw 'tile' and the one above or below it.
+        Can't animate two tiles in the same pos.
+        """
+        tile_2 = self.tiles.get((tile['pos'].x, tile['pos'].y,
+                                 [1, 0][tile['pos'].layer]))
+        if surf is sc.screen:
+            pos = (tile['pos'].x * self.tile_width,
+                   tile['pos'].y * self.tile_height - scroll)
+        else:
+            pos = (tile['pos'].x * self.tile_width,
+                   tile['pos'].y * self.tile_height)
+        if tile_2:
+            sc.draw_queue.append(
+                {'layer' : [2, 6][tile_2['pos'].layer],
+                 'func' : surf.blit, 'args' : (tile_2['images'][0], pos)})
+        sc.draw_queue.append(
+            {'layer' : [2, 6][tile['pos'].layer],
+             'func' : surf.blit,
+             'args' : (tile['images'][tile['index']], pos)})
 
