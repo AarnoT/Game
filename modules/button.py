@@ -100,6 +100,7 @@ class Button(object):
         self.rect = rect
         self.text = text
         self.press = strategy
+        # Pos is set in the draw function.
         self.pos = (-1000, -1000)
         self.id = 0
         self.active = True
@@ -136,13 +137,12 @@ class Button(object):
         """
         self.pos = (self.rect.x, self.rect.y + scroll)
         blit_rect = pg.Rect(self.pos, self.surf.get_size())
-        if self.rect.contains(blit_rect):
+        sc.draw_queue.append(
+            {'layer' : 10, 'surf' : self.surf, 'pos' : self.pos})
+        if highlighted:
             sc.draw_queue.append(
-                {'layer' : 10, 'surf' : self.surf, 'pos' : self.pos})
-            if highlighted:
-                sc.draw_queue.append({'layer' : 11, 'func' : pg.draw.rect,
-                                   'args' : (sc.screen, self.highlight_color,
-                                             self.rect, 2)})
+                {'layer' : 11, 'func' : pg.draw.rect,
+                 'args' : (sc.screen, self.highlight_color, self.rect, 2)})
 
     def clear(self):
         """Clear the area of 'self.rect' from 'self.dest'."""

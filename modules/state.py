@@ -181,7 +181,7 @@ class WorldState(State):
             blit_rect = pg.Rect((0, self.scroll), sc.screen.get_size())
             sc.draw_queue.append({'layer' : 1, 'func' : sc.screen.blit,
                                   'args' : (sc.background, (0, 0), blit_rect)})
-            self.level.animate(time, self.scroll, draw=True)
+            self.level.animate(time, self.scroll, surf=sc.background)
         else:
             self.level.animate(time, self.scroll)
 

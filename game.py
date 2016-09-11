@@ -14,7 +14,7 @@ class Game(object):
     """
     Static class for running the game.
 
-    class methods: main_loop, event_loop, resize
+    class methods: main_loop, update_fps, event_loop, resize
     class variables:
     max_fps, clock, caption, running, state, average_fps
     """
