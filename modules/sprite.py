@@ -112,8 +112,8 @@ class Sprite(pg.sprite.Sprite):
 
     def update(self, elapsed_time):
         """Update sprite position. Should be called every frame."""
-        self.x_pos += self.x_vel * (elapsed_time / 16.0)
-        self.y_pos += self.y_vel * (elapsed_time / 16.0)
+        self.x_pos += self.x_vel * min(self.steps, (elapsed_time / 16.0))
+        self.y_pos += self.y_vel * min(self.steps, (elapsed_time / 16.0))
         self.rect = self.image.get_rect(center=(self.x_pos, self.y_pos))
         self.steps -= elapsed_time / 16.0
         if self.state != 'still' and self.steps <= 0:

@@ -10,5 +10,5 @@ Click to move.
 3. [PyTMX](http://pytmx.readthedocs.io/en/latest/) (can be installed using "pip install pytmx")
 
 #### To-do:
-1. Add some tests
+1. Add more tests
 2. Implement battle system
