@@ -11,6 +11,7 @@ path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(os.path.join(path))
 from modules.state import State, MenuState, WorldState
 import modules.state as state
+import modules.screen as sc
 
 
 class TestState(unittest.TestCase):
@@ -28,6 +29,13 @@ class TestMenu(unittest.TestCase):
     def setUp(self):
         """Create 'MenuState' instance."""
         self.state = MenuState(MenuState.create_main_menu())
+
+    @unittest.skip('Outdated test.')
+    def test_scale(self):
+        """Assert background is cleared."""
+        self.state.scale(0.05)
+        self.assertEqual({'layer' : 1, 'func' : sc.background.fill,
+                          'args' : ((255, 255, 255),)}, sc.draw_queue[-1])
     
     def test_on_arrow_key(self):
         """Assert highlighted id is correct."""

@@ -13,7 +13,6 @@ import pygame as pg
 info = pg.display.Info()
 DEFAULT_RES = info.current_w, info.current_h
 os.environ['SDL_VIDEO_CENTERED'] = 'True'
-background = pg.Surface(DEFAULT_RES)
 
 def set_display(size=DEFAULT_RES, flags=pg.RESIZABLE):
     """
@@ -32,12 +31,20 @@ def draw_from_queue(queue):
     Dicts should have the keys 'layer' and either 'surf and 'pos'
     or 'func' and 'args'.
     If the queue isn't cleared things might lag.
+    Return list of areas that need to be updated.
     """
+    blit_rects = list()
     queue.sort(key=lambda i: i['layer'])
     while queue:
         item = queue.pop(0)
         if 'func' in item:
-            item['func'](*item['args'])
+            r = item['func'](*item['args'])
+            if isinstance(r, pg.Rect):
+                blit_rects.append(r)
+            elif 'rect' in item:
+                blit_rects.append(item['rect'])
         elif 'surf' in item:
-            screen.blit(item['surf'], item['pos'])
+            r = screen.blit(item['surf'], item['pos'], item.get('area'))
+            blit_rects.append(r)
+    return blit_rects
 

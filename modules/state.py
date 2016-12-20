@@ -13,6 +13,7 @@ from . import level
 from . import screen as sc
 from .button import Button, ButtonSet
 from .sprite import Sprite, main_group
+from . import text
 
 
 class State(object):
@@ -41,26 +42,25 @@ class MenuState(State):
     def __init__(self, button_set):
         """Create menu."""
         logging.info('Menu is active')
-        sc.draw_queue.append({'layer' : 1, 'func' : sc.background.fill,
-                              'args' : ((255, 255, 255),)})
+        sc.draw_queue.append(dict(layer=1, func=sc.screen.fill,
+                                  args=((255, 255, 255),)))
         self.button_set = button_set
 
     def scale(self, multiplier):
         """Resize the button set and clear the background."""
         self.button_set.scale(multiplier)
-        sc.draw_queue.append({'layer' : 1, 'func' : sc.background.fill,
-                              'args' : ((255, 255, 255),)})
+        sc.draw_queue.append(dict(layer=1, func=sc.screen.fill,
+                                  args=((255, 255, 255),)))
 
     def update(self, time):
         """
         Call functions to draw the menu.
         Should be called every frame.
         """
-        sc.draw_queue.append(
-            {'layer' : 1, 'surf' : sc.background, 'pos' : (0, 0)})
+        self.button_set.clear()
         self.button_set.highlight()
         sc.draw_queue.append(
-            {'layer' : 25, 'func' : self.button_set.draw, 'args' : (0,)})
+            dict(layer=25, func=self.button_set.draw, args=(0,)))
 
     def on_event(self, event):
         """Call function depending on event."""
@@ -133,8 +133,9 @@ class WorldState(State):
     """
     The world state.
 
-    instance variables: level, player, scroll
-    methods: __init__, scale, update, on_event, on_click
+    instance variables: level, player, scroll, nodes, prev_scroll,
+                        real_scroll, actual_scroll, redraw
+    methods: __init__, scale, update, on_event, on_click, zoom
     class variables: level, player_anim, pos_1, player_image
     """
 
@@ -148,19 +149,24 @@ class WorldState(State):
         logging.info('World is active')
         self.level = level.Level(level_name)
         self.player = Sprite(pos, image, anim)
-        sc.screen.blit(sc.background, (0, 0))
+        self.level.draw(self.scroll)
+        self.nodes = level.NodeGroup.from_level(self.level.level,
+                                                text.Text.from_json())
+        self.nodes.draw(self.scroll)
+        self.prev_scroll = self.scroll
+        self.real_scroll = 0
+        self.actual_scroll = 0
+        main_group.draw(self.level.tile_height * self.level.level.height)
+        self.redraw = False
+
 
     def scale(self, multiplier):
         """Scale things specific to the state."""
-        level_height = self.level.tile_height * self.level.level.height
-        res = sc.res[0], min(sc.res[1], level_height)
-        sc.res, sc.screen = sc.set_display(res, sc.screen.get_flags())
         self.level.reload()
         for sprite in main_group:
             sprite.scale(multiplier)
-        blit_rect = pg.Rect((0, self.scroll), sc.screen.get_size())
-        sc.draw_queue.append({'layer' : 25, 'func' : sc.screen.blit,
-                              'args' : (sc.background, (0, 0), blit_rect)})
+        self.nodes.scale(multiplier)
+        self.redraw = 3
 
     @property
     def scroll(self):
@@ -168,29 +174,91 @@ class WorldState(State):
         level_height = self.level.tile_height * self.level.level.height
         screen_height = sc.screen.get_height()
         return max(0, min(
-            self.player.y_pos - screen_height/2, level_height - screen_height))
+            self.player.rect.top - screen_height/2,
+            level_height - screen_height))
+
+    def zoom(self):
+        """Zoom level and scale things."""
+        old_width = self.level.tile_width
+        self.level.zoomed = pg.key.get_pressed()[pg.K_z]
+        self.level.reload()
+        new_width = self.level.tile_width
+        sc.draw_queue.append(dict(layer=1, func=sc.screen.fill,
+                                  args=((0, 0, 0),)))
+        self.scale(new_width / old_width)
+        level_width = self.level.tile_width * self.level.level.width
+        if self.level.zoomed:
+            y_pos = int(sc.screen.get_height() * 0.8)
+            for node in [node for node in self.nodes if node.text]:
+                node.text.pos = (level_width/2 - (
+                    node.text.surface.get_width()/2), y_pos)
 
     def update(self, time):
         """Update the state. Should be called every loop."""
-        self.update_level(time)
+        if self.redraw:
+            self.level.draw(self.scroll)
+            self.redraw -= 1
+        if pg.key.get_pressed()[pg.K_z] != self.level.zoomed:
+            self.zoom()
         self.update_sprites(time)
+        self.update_level(time)
+        self.prev_scroll = self.scroll
+
+    def scroll_level(self):
+        """Scroll the level and update the screen."""
+        scroll_change = self.scroll - self.prev_scroll
+        self.real_scroll += scroll_change
+        self.actual_scroll += int(scroll_change)
+        scroll_diff = self.real_scroll - self.actual_scroll
+        self.actual_scroll += int(scroll_diff)
+        total_scroll = int(scroll_change) + int(scroll_diff)
+        if total_scroll != 0:
+            # Surface.scroll has better performance than blit.
+            sc.draw_queue.append(dict(
+                layer=1, func=sc.screen.scroll, args=(0, -total_scroll),
+                rect=pg.Rect((0, 0), sc.screen.get_size())))
+            if total_scroll > 0:
+                scroll_rect = pg.Rect(
+                    0, self.scroll + sc.screen.get_height() - total_scroll,
+                    sc.screen.get_width(), total_scroll)
+            elif total_scroll < 0:
+                scroll_rect = pg.Rect(
+                    0, self.scroll, sc.screen.get_width(), -total_scroll)
+            self.level.draw_area(scroll_rect, self.scroll)
 
     def update_level(self, time):
-        """Scroll and animate level."""
+        """Scroll, animate level and draw nodes and text."""
         if self.player.y_vel != 0:
-            blit_rect = pg.Rect((0, self.scroll), sc.screen.get_size())
-            sc.draw_queue.append({'layer' : 1, 'func' : sc.screen.blit,
-                                  'args' : (sc.background, (0, 0), blit_rect)})
-            self.level.animate(time, self.scroll, surf=sc.background)
-        else:
+            self.scroll_level()
+            self.nodes.draw(self.scroll)
+
+        # Animate level.
+        if not any(node.text.active for node in self.nodes if node.text):
+            if any(
+                    tile['timer'] + time
+                    >= tile['frames'][tile['index']].duration
+                    for tile in self.level.animated_tiles):
+                main_group.draw(
+                    self.level.tile_height * self.level.level.height)
             self.level.animate(time, self.scroll)
 
     def update_sprites(self, time):
         """Update and draw each sprite."""
-        main_group.update(time)
-        sc.draw_queue.append({
-            'layer' : 15, 'func' : main_group.new_draw, 'args' : (
-                sc.screen, self.level.tile_height * self.level.level.height)})
+        if self.player.x_vel != 0 or self.player.y_vel != 0:
+            self.nodes.check(self.player)
+            old_rect = self.player.rect
+            main_group.update(time)
+            clear_rect = old_rect.union(self.player.rect)
+            self.level.draw_area(clear_rect, self.scroll)
+            for node in [n for n in self.nodes
+                         if n.active == '1' or n.active is True]:
+                if self.player.rect.colliderect(
+                        (node.x_pos - node.radius, node.y_pos - node.radius,
+                         node.radius*2, node.radius*2)):
+                    node.draw(self.scroll)
+            main_group.draw(self.level.tile_height * self.level.level.height)
+        else:
+            main_group.update(time)
 
     def on_event(self, event):
         """Call function depending on event."""
@@ -198,18 +266,38 @@ class WorldState(State):
             self.on_click(event.pos)
 
     def on_click(self, pos):
-        """Move self.player to 'pos'."""
-        self.player.move(pos, self.level.tile_height * self.level.level.height)
+        """Move self.player to 'pos' or update text."""
+        active_texts = [node for node in self.nodes
+                        if node.text and node.text.active]
+        if active_texts:
+            for node in active_texts:
+                node.update_text()
+                if not node.text.active:
+                    text_rect = node.text.rect.copy()
+                    text_rect.y += self.scroll
+                    sc.draw_queue.append(dict(
+                        layer=1, pos=(text_rect.x, text_rect.y),
+                        func=pg.draw.rect,
+                        args=(sc.screen, (0, 0, 0), text_rect)))
+                    self.level.draw_area(text_rect, self.scroll)
+                    self.level.draw_area(pg.Rect(
+                        node.x_pos - node.radius, node.y_pos - node.radius,
+                        node.radius*2, node.radius*2), self.scroll)
+                    node.active = False
+                    [n for n in self.nodes
+                        if str(n.id) == node.next_node][0].active = '1'
+                    main_group.draw(
+                        self.level.tile_height * self.level.level.height)
+        else:
+            self.player.move(
+                pos, self.level.tile_height * self.level.level.height)
 
 
-class BattleState(State):
-    pass
+class BattleState(WorldState):
+    """"""
 
-
-class SelectTile(BattleState):
-    pass
-
-
-class SelectAction(BattleState):
-    pass
+    def __init__(self, level_name, anim, pos, image):
+        """"""
+        super(BattleState, self).__init__(level_name, anim, pos, image)
+        text_box = pg.image.load('')
 

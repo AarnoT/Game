@@ -17,8 +17,8 @@ class ButtonSet(object):
 
     instance variables: buttons, highlighted_id,
     highlighted_button, active
-    methods:
-    __init__, toggle, scale, draw, press, highlight, check, clear
+    methods: __init__, toggle, scale, draw, press, highlight, check,
+             clear, __iter__
     """
 
     def __init__(self, buttons):
@@ -30,6 +30,11 @@ class ButtonSet(object):
         for button in self.buttons:
             button.id = self.next_id
             self.next_id += 1
+
+    def __iter__(self):
+        """Yield each button."""
+        for button in self.buttons:
+            yield button
 
     @property
     def highlighted_button(self):
@@ -95,7 +100,7 @@ class Button(object):
     def __init__(self, rect, text, strategy):
         """Set instance variables."""
         self.text_color = (1, 1, 1)
-        self.bg_color = (0, 0, 0)
+        self.bg_color = (255, 255, 255)
         self.highlight_color = (0, 0, 255)
         self.rect = rect
         self.text = text
@@ -117,7 +122,8 @@ class Button(object):
         text_pos = (self.rect.width/2 - text_surf.get_width()/2,
                     self.rect.height/2 - text_surf.get_height()/2)
         self.surf = pg.Surface(self.rect.size)
-        self.surf.set_colorkey(self.bg_color)
+        self.surf.fill(self.bg_color)
+        #self.surf.set_colorkey(self.bg_color)
         self.surf.blit(text_surf, text_pos)
         pg.draw.rect(self.surf, self.highlight_color,
                      pg.Rect((0, 0), self.rect.size), 1)
@@ -137,19 +143,19 @@ class Button(object):
         """
         self.pos = (self.rect.x, self.rect.y + scroll)
         blit_rect = pg.Rect(self.pos, self.surf.get_size())
-        sc.draw_queue.append(
-            {'layer' : 10, 'surf' : self.surf, 'pos' : self.pos})
+        sc.draw_queue.append(dict(layer=10, surf=self.surf, pos=self.pos))
         if highlighted:
-            sc.draw_queue.append(
-                {'layer' : 11, 'func' : pg.draw.rect,
-                 'args' : (sc.screen, self.highlight_color, self.rect, 2)})
+            sc.draw_queue.append(dict(
+                layer=11, func=pg.draw.rect,
+                args=(sc.screen, self.highlight_color, self.rect, 2)))
 
     def clear(self):
         """Clear the area of 'self.rect' from 'self.dest'."""
         clear_rect = pg.Rect(
             self.pos, (self.rect.width + 2, self.rect.height + 2))
-        sc.draw_queue.append({'layer' : 2, 'func' : pg.draw.rect, 'args' : (
-            sc.screen, self.bg_color, clear_rect)})
+        sc.draw_queue.append(dict(
+            layer=2, func=pg.draw.rect,
+            args=(sc.screen, self.bg_color, clear_rect)))
 
     def check(self, pos):
         """Check if pos overlaps 'self.rect'. Return bool."""

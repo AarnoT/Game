@@ -1,7 +1,8 @@
 """Module for running the game. Contains the Game class."""
 
 import logging
-logging.basicConfig(format='[%(asctime)s] %(message)s', level=logging.DEBUG)
+logging.basicConfig(
+    format='%(levelname)s [%(asctime)s] %(message)s', level=logging.WARNING)
 
 import pygame as pg
 pg.init()
@@ -19,7 +20,7 @@ class Game(object):
     max_fps, clock, caption, running, state, average_fps
     """
 
-    max_fps = 120
+    max_fps = 4000
     clock = pg.time.Clock()
     caption = 'The Game, FPS:{}'
     running = True
@@ -34,19 +35,19 @@ class Game(object):
             cls.clock.tick(cls.max_fps)
             cls.event_loop()
             cls.state.update(cls.clock.get_time())
-            sc.draw_from_queue(sc.draw_queue)
-            pg.display.flip()
+            rect_list = sc.draw_from_queue(sc.draw_queue)
+            pg.display.update(rect_list)
             cls.update_fps()
         logging.info('Game quitting.')
 
     @classmethod
     def update_fps(cls):
         """Update the average fps and the window caption."""
-        cls.average_fps.append(cls.clock.get_fps())
-        if len(cls.average_fps) > 60:
-            cls.average_fps.pop(0)
-        current_fps = int(sum(cls.average_fps) / len(cls.average_fps))
-        pg.display.set_caption(cls.caption.format(current_fps))
+        cls.average_fps.append(min(cls.clock.get_fps(), 10000))
+        if len(cls.average_fps) >= 240:
+            current_fps = int(sum(cls.average_fps) / len(cls.average_fps))
+            pg.display.set_caption(cls.caption.format(current_fps))
+            cls.average_fps = list()
 
     @classmethod
     def event_loop(cls):
