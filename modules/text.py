@@ -26,7 +26,7 @@ class Text(object):
 
     @classmethod
     def from_json(cls):
-        """Return a list of text objects based on a json file."""
+        """Return a dict of text objects based on a json file."""
         with open(join(TEXT_PATH, 'text.json')) as text:
             text_dict = load(text)
         return {
