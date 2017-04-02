@@ -1,14 +1,13 @@
-"""Module for running the game. Contains the Game class."""
+"""Module for the Game class."""
 
 import logging
 logging.basicConfig(
     format='%(levelname)s [%(asctime)s] %(message)s', level=logging.WARNING)
 
 import pygame as pg
-pg.init()
 
-import modules.screen as sc
-from modules.state import MenuState, WorldState, BattleState
+import screen as sc
+from state import MenuState, WorldState, BattleState
 
 
 class Game(object):
@@ -81,7 +80,4 @@ class Game(object):
         sc.res, sc.screen = sc.set_display(res, flags)
         cls.state.scale(multiplier)
 
-
-if __name__ == '__main__':
-    Game.main_loop()
 
