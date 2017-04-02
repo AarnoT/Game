@@ -1,7 +1,7 @@
 ## Game
 Made using pygame.
 Currently missing some features.
-Run game.py to start the game.
+Run run\_game.py to start the game.
 Click to move.
 
 #### Requirements:
