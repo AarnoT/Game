@@ -6,8 +6,8 @@ logging.basicConfig(
 
 import pygame as pg
 
-import screen as sc
-from state import MenuState, WorldState, BattleState
+from . import screen as sc
+from .state import MenuState, WorldState, BattleState
 
 
 class Game(object):
