@@ -1,9 +1,4 @@
-"""
-Module for sprites.
-
-classes: Group, Sprite, Player
-objects: main_group
-"""
+"""Module for sprites."""
 
 import logging
 from os.path import join
@@ -44,13 +39,7 @@ main_group = Group()
 
 
 class Sprite(pg.sprite.Sprite):
-    """
-    Class to extend the pygame sprite class.
-
-    instance variables: x_pos, y_pos, steps, image,
-    rect, size, state
-    methods: __init__, load_frames, scale, move, animate, update, stop
-    """
+    """Class to extend the pygame sprite class."""
 
     def __init__(self, pos, still, moving):
         """Set instance variables and load sprite frames."""

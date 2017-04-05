@@ -1,8 +1,4 @@
-"""
-Module for the button class and the button set.
-
-classes: ButtonSet, Button
-"""
+"""Module for the button class and the button set."""
 
 import logging
 
@@ -12,14 +8,7 @@ from . import screen as sc
 
 
 class ButtonSet(object):
-    """
-    Class to interact with a set of buttons at the same time.
-
-    instance variables: buttons, highlighted_id,
-    highlighted_button, active
-    methods: __init__, toggle, scale, draw, press, highlight, check,
-             clear, __iter__
-    """
+    """Class to interact with a set of buttons at the same time."""
 
     def __init__(self, buttons):
         """Set instance variables."""
@@ -90,12 +79,7 @@ class ButtonSet(object):
 
 
 class Button(object):
-    """
-    Class for buttons.
-
-    instance variables: rect, pos, id, text, font, surf, active
-    methods: __init__, render, press, scale, draw, clear, check
-    """
+    """Class for buttons."""
 
     def __init__(self, rect, text, strategy):
         """Set instance variables."""

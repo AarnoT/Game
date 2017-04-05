@@ -1,9 +1,4 @@
-"""
-Module for states.
-
-classes:
-State, MenuState, WorldState, BattleState, SelectTile, SelectAction
-"""
+"""Module for states."""
 
 import logging
 
@@ -30,14 +25,7 @@ class State(object):
 
 
 class MenuState(State):
-    """
-    State for the menu.
-
-    instance variables: button_set
-    methods: __init__, scale, update, on_event, on_click, on_arrow_key,
-    on_return
-    class methods: create_main_menu, start_game, fullscreen, exit_game
-    """
+    """State for the menu."""
 
     def __init__(self, button_set):
         """Create menu."""
@@ -130,14 +118,7 @@ class MenuState(State):
 
 
 class WorldState(State):
-    """
-    The world state.
-
-    instance variables: level, player, scroll, nodes, prev_scroll,
-                        real_scroll, actual_scroll, redraw
-    methods: __init__, scale, update, on_event, on_click, zoom
-    class variables: level, player_anim, pos_1, player_image
-    """
+    """The world state."""
 
     level = 'level_one.tmx'
     player_anim = ['dude1.png', 'dude2.png', 'dude3.png', 'dude2.png']

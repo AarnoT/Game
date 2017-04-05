@@ -12,14 +12,7 @@ from . import screen as sc
 from .path import LEVEL_PATH
 
 class Level(object):
-    """
-    Class for levels.
-
-    instance variables: level, tile_obj, tile_width, tile_height,
-                        tile_size, scroll, tiles, bg, zoomed
-    methods: __init__, reload, load_tiles, draw_area, draw, animate,
-             draw_tile
-    """
+    """Class for levels."""
 
     def __init__(self, tmx_file):
         """Set instance variables."""
@@ -132,15 +125,7 @@ class Level(object):
 
 
 class Node(object):
-    """
-    Class for nodes on the level.
-    Nodes can activate something when the player gets within the radius.
-
-    class methods: from_level
-    methods: __init__, scale, collides
-    instance variables: x_pos, y_pos, radius, active, next_node,
-                        action, name
-    """
+    """Nodes activate when the player gets within the radius."""
 
     def __init__(self, radius, pos, name, node_id, properties, text=None):
         """Initialize instance variables."""
@@ -181,13 +166,7 @@ class Node(object):
 
 
 class NodeGroup(object):
-    """
-    Convenience class for a group of node objects.
-
-    class methods: from_level
-    instance variables: nodes
-    methods: draw, scale, check, __iter__
-    """
+    """Convenience class for a group of node objects."""
 
     @classmethod
     def from_level(cls, level, text_dict):

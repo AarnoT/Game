@@ -11,13 +11,7 @@ from .state import MenuState, WorldState, BattleState
 
 
 class Game(object):
-    """
-    Static class for running the game.
-
-    class methods: main_loop, update_fps, event_loop, resize
-    class variables:
-    max_fps, clock, caption, running, state, average_fps
-    """
+    """Static class for running the game."""
 
     max_fps = 4000
     clock = pg.time.Clock()

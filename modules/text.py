@@ -16,13 +16,7 @@ text_box = pg.image.load(join(IMAGE_PATH, 'textbox.png'))
 
 
 class Text(object):
-    """
-    Class for a text pop-up.
-
-    methods: __init__, scale, next, draw
-    instance variables: rect, text, surface, num, buttons, lines, font,
-                        active, surf_size, pos
-    """
+    """Class for a text pop-up."""
 
     @classmethod
     def from_json(cls):

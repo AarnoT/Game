@@ -1,9 +1,4 @@
-"""
-Module for things related to the screen.
-
-variables: info, DEFAULT_RES, screen, background, draw_queue
-functions: draw_from_queue, set_display
-"""
+"""Module for things related to the screen."""
 
 import os
 import logging
